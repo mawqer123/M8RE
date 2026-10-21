@@ -39,8 +39,8 @@ if [ -z "$PLATFORM" ] || [ ! -f "$PLATFORM" ]; then
   echo "!! 找不到 android.jar,请安装 platform"; exit 1
 fi
 
-APP_VERSION_NAME="1.0"
-APP_VERSION_CODE=1
+APP_VERSION_NAME="1.1"
+APP_VERSION_CODE=2
 
 APP=$ROOT/app/src/main
 BUILD=$ROOT/build

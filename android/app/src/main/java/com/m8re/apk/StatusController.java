@@ -93,9 +93,6 @@ final class StatusController {
     void notVideo() {
         warn(act.getString(R.string.st_not_video), act.getString(R.string.act_open_video));
     }
-    void notLoggedIn() {
-        warn(act.getString(R.string.st_no_login), act.getString(R.string.act_login));
-    }
     void netError() {
         error(act.getString(R.string.st_net_error), act.getString(R.string.act_check_net));
     }

@@ -21,10 +21,8 @@
     <string name="st_engine_ok">M8RE 引擎已启动 ✓</string>
     <string name="st_no_danmaku">未检测到弹幕层</string>
     <string name="st_not_video">当前页面不是视频页</string>
-    <string name="st_no_login">未登录，拿不到弹幕数据</string>
     <string name="st_net_error">网络请求失败</string>
 
-    <string name="act_login">请先登录 bilibili</string>
     <string name="act_open_video">请打开一个视频页</string>
     <string name="act_retry">可点「重试注入」再试一次</string>
     <string name="act_reload">请刷新页面后重试</string>

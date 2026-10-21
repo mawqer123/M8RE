@@ -81,7 +81,7 @@ Direct APK for v1.0:
 
 1. Download `M8RE-*.apk` from Releases.
 2. Allow "install unknown apps" on your device, then install.
-3. Open the app and tap **登录** to sign in to bilibili (danmaku data requires a login).
+3. Optionally tap **登录** to sign in to your bilibili account.
 4. Paste a video URL or a **BV id** (e.g. `BV1Bs411Z7rR`) into the top bar and tap Go.
 5. The status bar shows `M8RE 引擎已启动 ✓` when the engine is up.
 
