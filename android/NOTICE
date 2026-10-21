@@ -1,15 +1,15 @@
-m8re-apk — third-party notices
+m8re-apk —— 第三方组件声明
 ==============================
 
-This product bundles the M8RE engine (JavaScript files under
-app/src/main/assets/m8re/, except host_shim.js, _mouse.js, inject.js which
-are part of m8re-apk itself).
+本项目打包了 M8RE 引擎（构建时从仓库根 content/ 同步到
+app/src/main/assets/m8re/ 的 JavaScript 文件）。
 
-M8RE engine
+其中 host_shim.js、_mouse.js、inject.js 属于本移植版自身，不在上游 M8RE 范围内。
+
+M8RE 引擎
 -----------
 Copyright (c) 2026 mtdcmz
-Licensed under the MIT License. Full text below and also shipped inside the
-APK at assets/m8re/LICENSE.txt.
+采用 MIT 许可证。全文见下方，同时随 APK 一起分发于 assets/m8re/LICENSE.txt。
 
 MIT License
 

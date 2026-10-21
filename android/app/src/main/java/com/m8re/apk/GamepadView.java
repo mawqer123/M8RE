@@ -15,17 +15,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * On-screen gamepad overlay.
+ * 屏幕虚拟手柄浮层。
  *
- * The buttons map 1:1 onto the keyCode whitelist the M8RE engine actually
- * accepts (11_hostapi.js ScriptEventManager._allow):
+ * 按键与 M8RE 引擎实际接受的 keyCode 白名单一一对应
+ * （11_hostapi.js 中的 ScriptEventManager._allow）：
  *
- *   27 (Esc) | 34..40 (PgDn End Home ← ↑ → ↓) | 65 (A) 68 (D) 83 (S) 87 (W)
- *   | 96..105 (numpad 0-9)
+ *   27（Esc）| 34..40（PgDn End Home ← ↑ → ↓）| 65（A）68（D）83（S）87（W）
+ *   | 96..105（小键盘 0-9）
  *
- * Everything else is filtered out by the engine, so adding more keys would be
- * dead weight. Keys are delivered through window.__moKey (installed by the host
- * shim) which synthesises a real keydown/keyup carrying the legacy keyCode.
+ * 其余按键会被引擎过滤掉，多加没有意义。按键通过宿主 shim 安装的
+ * window.__moKey 下发，由它合成一个携带旧版 keyCode 的真实 keydown/keyup。
  */
 public class GamepadView extends View {
 
@@ -110,7 +109,7 @@ public class GamepadView extends View {
         all.add(new Btn("Esc", K_ESC, false));
         all.add(new Btn("Home", K_HOME, false));
 
-        // numpad 0-9 (2-digit labels PgDn/End live in the last row)
+        // 小键盘 0-9（PgDn/End 等两位数标签放在最后一行）
         for (int i = 0; i <= 9; i++) {
             all.add(new Btn(String.valueOf(i), K_NUMPAD0 + i, true));
         }
@@ -619,9 +618,9 @@ public class GamepadView extends View {
     }
 
     /**
-     * Hand the key to window.__moKey() (host shim) which synthesises a real
-     * keydown/keyup with the legacy keyCode the engine reads. If the shim is
-     * not there yet we fall back to an inline synthesis so the pad still works.
+     * 把按键交给 window.__moKey()（宿主 shim），由它合成一个携带引擎所读取的
+     * 旧版 keyCode 的真实 keydown/keyup。若 shim 尚未就绪，则退回到内联合成，
+     * 保证手柄仍然可用。
      */
     private void dispatchKey(final int code, final boolean down, final String label, boolean quiet) {
         if (!quiet) echo(label, down);

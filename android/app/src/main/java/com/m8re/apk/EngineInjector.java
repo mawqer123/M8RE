@@ -10,23 +10,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Loads the M8RE engine JS (shipped verbatim from the upstream repo) out of
- * assets/m8re/ and injects it into the loaded bilibili video page.
+ * 从 assets/m8re/ 读取 M8RE 引擎 JS（来自上游仓库，原样未改），
+ * 注入到已加载的 bilibili 视频页面中。
  *
- * Injection order: host shim -> mouse layer -> engine files (manifest.json order).
+ * 注入顺序：宿主 shim -> 鼠标层 -> 引擎各文件（与 manifest.json 一致）。
  *
- * Two things this class is careful about, both learned the hard way:
+ * 有两点是踩过坑之后才加上的：
  *
- *  1. evaluateJavascript() is always called with a real ValueCallback. Some
- *     WebView implementations silently drop the script when the callback is
- *     null, which looks exactly like "the engine never starts".
- *  2. The bundle is injected in line-aligned chunks with a callback chain
- *     (plus a timed fallback) instead of one ~330 KB call, so a single huge
- *     eval can neither be truncated nor block the UI thread.
+ *  1. evaluateJavascript() 一律传入真实的 ValueCallback。部分 WebView 实现
+ *     在回调为 null 时会静默丢弃脚本，表现和「引擎根本没启动」完全一样。
+ *  2. 按整文件为单位分块注入，块与块之间用回调链推进（另有超时兜底），
+ *     而不是一次性 eval 约 330 KB，避免单次巨大 eval 被截断或阻塞 UI 线程。
  */
 final class EngineInjector {
 
-    // Same order as manifest.json content_scripts.js
+    // 顺序与 manifest.json 的 content_scripts.js 一致
     static final String[] ENGINE_FILES = {
             "m8re/00_ns.js",
             "m8re/01_scanner.js",

@@ -29,18 +29,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * M8RE Android host.
+ * M8RE 的 Android 宿主。
  *
- * A single-Activity WebView that loads bilibili video pages in desktop mode and
- * injects the (unmodified) M8RE engine scripts, replacing the three Chrome
- * extension APIs the engine relied on:
+ * 单 Activity 的 WebView，以桌面版方式加载 bilibili 视频页，并注入（未经修改的）
+ * M8RE 引擎脚本，同时替换引擎原本依赖的三个 Chrome 扩展接口：
  *
- *   chrome.runtime.sendMessage (bg fetch proxy) -> M8NetBridge + shouldInterceptRequest
- *   chrome.runtime.getURL (inject.js)           -> M8Bridge.injectIntoPage()
- *   chrome.storage.local (rank/storage)         -> localStorage (graceful fallback)
+ *   chrome.runtime.sendMessage（后台跨域代理） -> M8NetBridge + shouldInterceptRequest
+ *   chrome.runtime.getURL（inject.js）         -> 由宿主注入到页面
+ *   chrome.storage.local（排行/存档）           -> localStorage（优雅降级）
  *
- * The engine itself (VM, graphics, host API) is shipped byte-for-byte from the
- * upstream repo in assets/m8re/ and is NOT modified.
+ * 引擎本体（VM、图形、宿主 API）自上游仓库原样打包，未作任何修改。
  */
 public class MainActivity extends android.app.Activity {
 
@@ -61,10 +59,10 @@ public class MainActivity extends android.app.Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Keep the screen on during danmaku playback.
+        // 弹幕播放期间保持屏幕常亮。
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        // ---- root vertical layout: [top bar][webview] ----
+        // ---- 根布局：竖向 [顶部栏][WebView] ----
         root = new FrameLayout(this);
         LinearLayout vertical = new LinearLayout(this);
         vertical.setOrientation(LinearLayout.VERTICAL);
@@ -156,7 +154,7 @@ public class MainActivity extends android.app.Activity {
             sizeBar.setProgress(Math.max(0, Math.min(200, pr)));
         });
 
-        // Handle link/share intents.
+        // 处理链接/分享的 Intent。
         String startUrl = HOME_URL;
         Intent it = getIntent();
         if (it != null) {
@@ -191,9 +189,8 @@ public class MainActivity extends android.app.Activity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
-        // Desktop UA: REQUIRED. The engine hardcodes .bpx-player-* desktop
-        // player DOM selectors; a mobile UA gets the m-site layout and every
-        // selector misses.
+        // 必须是桌面版 UA：引擎写死了 .bpx-player-* 这套桌面播放器的 DOM 选择器；
+        // 若用移动端 UA 会拿到 m 站布局，所有选择器都会落空。
         s.setUserAgentString(desktopUserAgent());
 
         CookieManager cm = CookieManager.getInstance();
@@ -212,7 +209,7 @@ public class MainActivity extends android.app.Activity {
         });
         web.setBackgroundColor(0xFF000000);
 
-        // JS -> native bridge used by the injected fetch shim.
+        // JS 调用原生用的桥，供注入的 fetch shim 使用。
         web.addJavascriptInterface(new M8NetBridge(), "M8Native");
         web.addJavascriptInterface(new M8LogBridge(), "M8NativeLog");
     }

@@ -1,12 +1,12 @@
 #!/bin/bash
-# M8RE Android prototype — manual aapt2/javac/d8/apksigner build.
-# Avoids Gradle entirely: fully offline, builds in seconds.
+# M8RE Android 移植版 —— 手工调用 aapt2/javac/d8/apksigner 构建。
+# 完全不依赖 Gradle：离线可用，几秒出包。
 set -e
 
 # 脚本自身所在目录(可在任意位置 clone 后直接构建)
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Android SDK 定位顺序:环境变量 > local.properties > 常见默认路径
+# Android SDK 定位顺序：环境变量 > local.properties > 常见默认路径
 if [ -n "$ANDROID_HOME" ]; then
   SDK=$ANDROID_HOME
 elif [ -n "$ANDROID_SDK_ROOT" ]; then
@@ -31,7 +31,7 @@ if [ -z "$BT" ]; then
   echo "!! $SDK/build-tools 下没有可用的 aapt2"; exit 1
 fi
 
-# platform:优先 android-35,没有就取版本号最高的可用 platform
+# 平台版本：优先 android-35，没有就取版本号最高的可用平台
 PLATFORM=$SDK/platforms/android-35/android.jar
 if [ ! -f "$PLATFORM" ]; then
   PLATFORM=""
@@ -54,9 +54,9 @@ BUILD=$ROOT/build
 OUT=$ROOT/out
 
 # ------------------------------------------------------------------
-# 引擎同步:本 fork 的上游扩展源码在仓库根的 content/ (git 里只存一份)。
-# assets/m8re/ 只存放移层自己写的文件;每次构建前把 content/*.js 复制过去,
-# 保证 Android 版永远和同一棵树的引擎一致,不会出现两份 divergent 的副本。
+# 引擎同步：本 fork 的上游扩展源码在仓库根的 content/（git 里只存一份）。
+# assets/m8re/ 只存放移植层自己写的文件；每次构建前把 content/*.js 复制过去，
+# 保证 Android 版永远和同一棵树的引擎一致，不会出现两份互相分歧的副本。
 # ------------------------------------------------------------------
 UPSTREAM_CONTENT="$ROOT/../content"
 ASSETS_M8RE="$APP/assets/m8re"
@@ -77,10 +77,10 @@ fi
 rm -rf "$BUILD" "$OUT"
 mkdir -p "$BUILD/gen" "$BUILD/classes" "$BUILD/dex" "$OUT"
 
-echo "==> [1/6] aapt2 compile resources"
+echo "==> [1/6] aapt2 编译资源"
 "$BT/aapt2" compile --dir "$APP/res" -o "$BUILD/res.zip"
 
-echo "==> [2/6] aapt2 link (generate R.java + base APK)"
+echo "==> [2/6] aapt2 链接（生成 R.java 与基础 APK）"
 "$BT/aapt2" link \
   -o "$BUILD/base.apk" \
   -I "$PLATFORM" \
@@ -95,7 +95,7 @@ echo "==> [2/6] aapt2 link (generate R.java + base APK)"
 echo "==> [2.5/6] 校验注入分块:每块必须能单独通过 node --check"
 python3 "$ROOT/tools/check_chunks.py" || { echo "!! 分块语法检查失败,拒绝打包"; exit 1; }
 
-echo "==> [3/6] javac"
+echo "==> [3/6] javac 编译"
 find "$APP/java" "$BUILD/gen" -name "*.java" > "$BUILD/sources.txt"
 javac -source 8 -target 8 -encoding UTF-8 \
   -bootclasspath "$PLATFORM" \
@@ -103,27 +103,27 @@ javac -source 8 -target 8 -encoding UTF-8 \
   -d "$BUILD/classes" \
   @"$BUILD/sources.txt" 2>&1 | grep -v "bootstrap class path" || true
 
-echo "==> [4/6] d8 dex"
+echo "==> [4/6] d8 生成 dex"
 "$BT/d8" --min-api 24 --lib "$PLATFORM" \
   --output "$BUILD/dex" \
   $(find "$BUILD/classes" -name "*.class")
 
-echo "==> [5/6] package classes.dex into APK"
+echo "==> [5/6] 将 classes.dex 打包进 APK"
 cp "$BUILD/base.apk" "$BUILD/unsigned.apk"
 (cd "$BUILD/dex" && "$BT/aapt" add "$BUILD/unsigned.apk" classes.dex >/dev/null) 2>/dev/null || \
   (cd "$BUILD/dex" && zip -q -j "$BUILD/unsigned.apk" classes.dex)
 
-echo "==> [6/6] zipalign + sign"
+echo "==> [6/6] zipalign 对齐并签名"
 # 签名:优先用你自备的密钥(自己填路径与密码),没有才回退到本地 debug 密钥。
 #
 # 自己签名(发布用):
 #   export M8_KEYSTORE=/path/to/your.jks
-#   export M8_KS_PASS='你的store密码'
-#   export M8_KEY_ALIAS='你的alias'
-#   export M8_KEY_PASS='你的key密码'
+#   export M8_KS_PASS='你的密钥库密码'
+#   export M8_KEY_ALIAS='你的密钥别名'
+#   export M8_KEY_PASS='你的密钥密码'
 #   ./build.sh
 #
-# 不设这些变量时,回退到仓库内 debug.keystore(仅限个人本地测试;
+# 不设置这些变量时，回退到本地 debug.keystore（仅限个人本地测试；
 # 别人拿到源码也能用它签,所以发布版请务必用你自己的密钥重签)。
 KEYSTORE=${M8_KEYSTORE:-$ROOT/debug.keystore}
 KS_PASS=${M8_KS_PASS:-}

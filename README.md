@@ -61,10 +61,17 @@ Released under the [MIT License](LICENSE).
 
 ## Android 移植版（本 fork 新增）
 
-本 fork 在 `android/` 下增加了把引擎打包成**纯 APK** 的文档与工具。原扩展的
-`content/`、`background/`、`manifest.json` 保持原样，未作修改。
+本 fork 在 `android/` 下增加了把 M8RE 引擎打包成**纯 APK** 的代码与工具。
+上游的扩展代码（`content/`、`background/`、`manifest.json`）保持原样，一行未改。
 
-- 快速开始、构建方式、虚拟手柄键位、许可与免责声明见 [android/README.md](android/README.md)
-- 引擎源码在仓库根的 `content/`；`android/build.sh` 会在构建时自动同步，
-  因此不存在两份会漂移的副本
-- 报告问题请在此 fork 提 issue，不要打扰上游作者
+> **⚠️ 本项目纯 AI 生成，仅做过测试与少量实际使用体验，不代表在你的手机机型上一定能正常工作。**
+> 可能出现闪退、卡顿、黑屏或按钮失灵等问题。**如有任何问题，请立即上报给本移植版的作者
+> [mawqer123](https://github.com/mawqer123)，不要打扰上游作者 mtdcmz。**
+> 上游 M8RE 与此移植版无关，上游作者不承担任何责任。
+
+- 下载：**https://github.com/mawqer123/M8RE/releases/latest**
+- 指定版本：**https://github.com/mawqer123/M8RE/releases/tag/v1.0**
+- 安装、构建、虚拟手柄键位、许可与免责声明见 [android/README.md](android/README.md)
+- 引擎源码位于仓库根的 `content/`，`android/build.sh` 会在构建时自动同步，
+  因此不存在两份会不一致的副本
+- 有问题请在本 fork 提 issue，**不要打扰上游作者**
