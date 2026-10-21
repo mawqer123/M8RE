@@ -69,11 +69,11 @@ Latest release:
 
 Pinned version:
 
-**https://github.com/mawqer123/M8RE/releases/tag/v1.0**
+**https://github.com/mawqer123/M8RE/releases/tag/v1.2**
 
-Direct APK for v1.0:
+Direct APK for v1.2:
 
-**https://github.com/mawqer123/M8RE/releases/download/v1.0/M8RE-1.0.apk**
+**https://github.com/mawqer123/M8RE/releases/download/v1.2/M8RE-1.2.apk**
 
 ---
 

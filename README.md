@@ -73,7 +73,7 @@ under [`android/`](android/). The upstream extension code (`content/`, `backgrou
 > port and its author bears no responsibility for it.
 
 - Download: **https://github.com/mawqer123/M8RE/releases/latest**
-- Pinned version: **https://github.com/mawqer123/M8RE/releases/tag/v1.0**
+- Pinned version: **https://github.com/mawqer123/M8RE/releases/tag/v1.2**
 - Installation, build instructions, gamepad key map, license and disclaimer:
   [android/README.md](android/README.md)
 - Engine sources live in the repository root `content/` and are synced by

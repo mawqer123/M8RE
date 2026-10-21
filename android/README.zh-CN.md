@@ -59,11 +59,11 @@ M8RE 从零复刻了那个 M8 虚拟机。本项目让它能跑在 Android 上�
 
 指定版本（历史地址）：
 
-**https://github.com/mawqer123/M8RE/releases/tag/v1.0**
+**https://github.com/mawqer123/M8RE/releases/tag/v1.2**
 
-直接下载 v1.0 的 APK：
+直接下载 v1.2 的 APK：
 
-**https://github.com/mawqer123/M8RE/releases/download/v1.0/M8RE-1.0.apk**
+**https://github.com/mawqer123/M8RE/releases/download/v1.2/M8RE-1.2.apk**
 
 ---
 

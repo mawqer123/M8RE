@@ -90,7 +90,7 @@ M8 脚本可以作为不可见的 BAS 载体，通过 bilibili 的弹幕服务�
 > 上游 M8RE 与此移植版无关，上游作者不承担任何责任。
 
 - 下载：**https://github.com/mawqer123/M8RE/releases/latest**
-- 指定版本：**https://github.com/mawqer123/M8RE/releases/tag/v1.0**
+- 指定版本：**https://github.com/mawqer123/M8RE/releases/tag/v1.2**
 - 安装、构建、虚拟手柄键位、许可与免责声明见 [android/README.zh-CN.md](android/README.zh-CN.md)
 - 引擎源码位于仓库根的 `content/`，`android/build.sh` 会在构建时自动同步，
   因此不存在两份会不一致的副本
