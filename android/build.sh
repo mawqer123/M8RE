@@ -45,6 +45,10 @@ if [ -z "$PLATFORM" ] || [ ! -f "$PLATFORM" ]; then
   echo "!! 找不到 android.jar,请安装 platform"; exit 1
 fi
 
+# 版本号:只在这里定义,其余位置一律引用,避免多处漂移
+APP_VERSION_NAME="1.0"
+APP_VERSION_CODE=1
+
 APP=$ROOT/app/src/main
 BUILD=$ROOT/build
 OUT=$ROOT/out
@@ -84,7 +88,7 @@ echo "==> [2/6] aapt2 link (generate R.java + base APK)"
   --java "$BUILD/gen" \
   --min-sdk-version 24 \
   --target-sdk-version 34 \
-  --version-code 9 --version-name "0.3.6" \
+  --version-code "$APP_VERSION_CODE" --version-name "$APP_VERSION_NAME" \
   -A "$APP/assets" \
   "$BUILD/res.zip"
 
@@ -146,9 +150,9 @@ fi
 "$BT/apksigner" sign --ks "$KEYSTORE" --ks-pass "pass:$KS_PASS" \
   --ks-key-alias "$KEY_ALIAS" --key-pass "pass:${KEY_PASS:-$KS_PASS}" \
   --v1-signing-enabled true --v2-signing-enabled true \
-  --out "$OUT/M8RE-0.3.6.apk" "$BUILD/aligned.apk"
-"$BT/apksigner" verify --print-certs "$OUT/M8RE-0.3.6.apk" | head -3
+  --out "$OUT/M8RE-$APP_VERSION_NAME.apk" "$BUILD/aligned.apk"
+"$BT/apksigner" verify --print-certs "$OUT/M8RE-$APP_VERSION_NAME.apk" | head -3
 
 echo
-echo "==> BUILD OK: $OUT/M8RE-0.3.6.apk"
-ls -la "$OUT/M8RE-0.3.6.apk"
+echo "==> BUILD OK: $OUT/M8RE-$APP_VERSION_NAME.apk"
+ls -la "$OUT/M8RE-$APP_VERSION_NAME.apk"
