@@ -99,6 +99,23 @@ Toggle with the **手柄** button in the top bar.
 
 Multi-touch is supported, so you can hold a direction and jump at the same time.
 
+Long-press **手柄** to enter edit mode: drag buttons, pinch to resize. It also offers:
+
+- **Simplified / Full** key presets
+- **Left / right handed** layout mirroring
+- Opacity and button size adjustment
+- Layout is saved and restored automatically
+
+The top bar has two rows: URL field with Go / Home / Login, then
+Gamepad / Mouse / Bookmarks / Retry / Fullscreen. **Long-press Bookmarks** to open
+favourites and browse history, jump to an entry, or clear history.
+
+The status bar is colour-coded and distinguishes stages: page loading, engine injecting,
+injected but danmaku layer not ready, engine ready, and non-video pages. Failures come
+with a suggested action (retry injection, check network). When engine probing fails it
+reports a diagnosis (missing video element, player container not ready, or overlay not
+mounted) instead of a bare state string.
+
 ---
 
 ## Build from source

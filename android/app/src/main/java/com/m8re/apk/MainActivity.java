@@ -35,7 +35,8 @@ public class MainActivity extends android.app.Activity {
 
     private WebView web;
     private ProgressBar progress;
-    private TextView statusBar;
+    private StatusController status;
+    private HistoryStore history;
     private EditText urlBar;
     private LinearLayout topBar;
     private FrameLayout root;
@@ -53,48 +54,7 @@ public class MainActivity extends android.app.Activity {
         LinearLayout vertical = new LinearLayout(this);
         vertical.setOrientation(LinearLayout.VERTICAL);
 
-        topBar = new LinearLayout(this);
-        topBar.setOrientation(LinearLayout.HORIZONTAL);
-        topBar.setPadding(dp(6), dp(6), dp(6), dp(6));
-        topBar.setBackgroundColor(0xFF1A1A1A);
-
-        urlBar = new EditText(this);
-        urlBar.setSingleLine(true);
-        urlBar.setHint("bilibili URL / BV id");
-        urlBar.setTextColor(0xFFEEEEEE);
-        urlBar.setHintTextColor(0xFF888888);
-        urlBar.setTextSize(13);
-        LinearLayout.LayoutParams ulp = new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        topBar.addView(urlBar, ulp);
-
-        android.widget.Button goBtn = new android.widget.Button(this);
-        goBtn.setText("Go");
-        goBtn.setOnClickListener(v -> navigate(resolveInput(urlBar.getText().toString())));
-        topBar.addView(goBtn);
-
-        android.widget.Button homeBtn = new android.widget.Button(this);
-        homeBtn.setText("B站");
-        homeBtn.setOnClickListener(v -> web.loadUrl(HOME_URL));
-        topBar.addView(homeBtn);
-
-        android.widget.Button loginBtn = new android.widget.Button(this);
-        loginBtn.setText("登录");
-        loginBtn.setOnClickListener(v ->
-                web.loadUrl("https://passport.bilibili.com/login"));
-        topBar.addView(loginBtn);
-
-        padToggleBtn = new android.widget.Button(this);
-        padToggleBtn.setText("手柄");
-        padToggleBtn.setOnClickListener(v -> toggleGamepad());
-        padToggleBtn.setOnLongClickListener(v -> { togglePadEdit(); return true; });
-        topBar.addView(padToggleBtn);
-
-        mouseToggleBtn = new android.widget.Button(this);
-        mouseToggleBtn.setText("鼠标");
-        mouseToggleBtn.setOnClickListener(v -> toggleMouse());
-        topBar.addView(mouseToggleBtn);
-
+        topBar = buildTopBar();
         vertical.addView(topBar, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -112,13 +72,9 @@ public class MainActivity extends android.app.Activity {
         vertical.addView(webHolder, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
-        statusBar = new TextView(this);
-        statusBar.setTextColor(0xFF2A2A2A);
-        statusBar.setTextSize(11);
-        statusBar.setPadding(dp(6), dp(2), dp(6), dp(2));
-        statusBar.setBackgroundColor(0xFFDDDDDD);
-        statusBar.setText("M8RE 初始化中...");
-        vertical.addView(statusBar, new LinearLayout.LayoutParams(
+        history = new HistoryStore(this);
+        status = new StatusController(this);
+        vertical.addView(status.view(), new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         root.addView(vertical, new FrameLayout.LayoutParams(
@@ -237,6 +193,148 @@ public class MainActivity extends android.app.Activity {
         return "WebView";
     }
 
+    private LinearLayout buildTopBar() {
+        LinearLayout bar = new LinearLayout(this);
+        bar.setOrientation(LinearLayout.VERTICAL);
+        bar.setBackgroundResource(R.drawable.holo_topbar_bg);
+        bar.setPadding(dp(6), dp(5), dp(6), dp(5));
+
+        LinearLayout navRow = new LinearLayout(this);
+        navRow.setOrientation(LinearLayout.HORIZONTAL);
+        navRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+        urlBar = new EditText(this);
+        urlBar.setSingleLine(true);
+        urlBar.setHint(R.string.hint_url);
+        urlBar.setTextColor(getResources().getColor(R.color.urlbar_text));
+        urlBar.setHintTextColor(getResources().getColor(R.color.urlbar_hint));
+        urlBar.setTextSize(13);
+        urlBar.setBackgroundResource(R.drawable.holo_url_bg);
+        navRow.addView(urlBar, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        navRow.addView(holoBtn(R.string.btn_go, v -> navigate(resolveInput(urlBar.getText().toString()))));
+        navRow.addView(holoBtn(R.string.btn_home, v -> web.loadUrl(HOME_URL)));
+        navRow.addView(holoBtn(R.string.btn_login, v ->
+                web.loadUrl("https://passport.bilibili.com/login")));
+
+        bar.addView(navRow, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout toolRow = new LinearLayout(this);
+        toolRow.setOrientation(LinearLayout.HORIZONTAL);
+        toolRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rowLp.topMargin = dp(5);
+
+        padToggleBtn = holoBtn(R.string.btn_gamepad, v -> toggleGamepad());
+        padToggleBtn.setOnLongClickListener(v -> { togglePadEdit(); return true; });
+        toolRow.addView(padToggleBtn);
+
+        mouseToggleBtn = holoBtn(R.string.btn_mouse, v -> toggleMouse());
+        toolRow.addView(mouseToggleBtn);
+
+        android.widget.Button favBtn = holoBtn(R.string.btn_bookmarks, v -> toggleFavourite());
+        favBtn.setOnLongClickListener(v -> { showHistoryDialog(); return true; });
+        toolRow.addView(favBtn);
+        toolRow.addView(holoBtn(R.string.btn_retry, v -> retryInject()));
+        toolRow.addView(holoBtn(R.string.btn_fullscreen, v -> toggleFullscreen()));
+
+        bar.addView(toolRow, rowLp);
+        return bar;
+    }
+
+    private android.widget.Button holoBtn(int textRes, android.view.View.OnClickListener l) {
+        android.widget.Button b = new android.widget.Button(this);
+        b.setText(textRes);
+        b.setBackgroundResource(R.drawable.holo_button_bg);
+        b.setTextColor(0xffffffff);
+        b.setTextSize(12);
+        b.setAllCaps(false);
+        b.setMinWidth(0);
+        b.setMinHeight(0);
+        b.setPadding(dp(10), dp(6), dp(10), dp(6));
+        b.setOnClickListener(l);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.leftMargin = dp(4);
+        b.setLayoutParams(lp);
+        return b;
+    }
+
+    private void retryInject() {
+        if (web == null) return;
+        String u = web.getUrl();
+        if (u == null || !u.contains("bilibili.com/video/")) {
+            status.notVideo();
+            return;
+        }
+        lastInjected = u;
+        EngineInjector.newDocument();
+        EngineInjector.inject(this, web);
+    }
+
+    private void showHistoryDialog() {
+        final java.util.List<HistoryStore.Entry> favs = history.favourites();
+        final java.util.List<HistoryStore.Entry> hist = history.history();
+        java.util.List<String> items = new java.util.ArrayList<>();
+        java.util.List<String> urls = new java.util.ArrayList<>();
+        if (!favs.isEmpty()) {
+            items.add("── 收藏 ──");
+            urls.add(null);
+            for (HistoryStore.Entry e : favs) { items.add("★ " + e.display()); urls.add(e.url); }
+        }
+        if (!hist.isEmpty()) {
+            items.add("── 历史 ──");
+            urls.add(null);
+            for (HistoryStore.Entry e : hist) { items.add("· " + e.display()); urls.add(e.url); }
+        }
+        if (items.isEmpty()) {
+            setStatus("暂无历史与收藏");
+            return;
+        }
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("收藏与历史")
+                .setItems(items.toArray(new String[0]), (d, which) -> {
+                    String u = urls.get(which);
+                    if (u != null) navigate(u);
+                })
+                .setPositiveButton("清空历史", (d, w) -> {
+                    history.clearHistory();
+                    setStatus("历史已清空");
+                })
+                .setNegativeButton("关闭", null)
+                .show();
+    }
+
+    private void toggleFavourite() {
+        if (web == null) return;
+        String u = web.getUrl();
+        if (u == null || u.isEmpty()) return;
+        String title = web.getTitle();
+        if (history.isFavourite(u)) {
+            history.removeFavourite(u);
+            setStatus("已取消收藏");
+        } else {
+            history.addFavourite(u, title);
+            setStatus("已收藏: " + title);
+        }
+    }
+
+    private boolean isFullscreen = false;
+
+    private void toggleFullscreen() {
+        isFullscreen = !isFullscreen;
+        if (isFullscreen) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            topBar.setVisibility(View.GONE);
+        } else {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            topBar.setVisibility(View.VISIBLE);
+        }
+    }
+
     private void toggleMouse() {
         mouseOn = !mouseOn;
         pushMouseFlag();
@@ -279,6 +377,19 @@ public class MainActivity extends android.app.Activity {
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
         padEditBar.addView(editBtn("按键", v -> showPadEditor()));
+        padEditBar.addView(editBtn("简化", v -> {
+            if (gamepad != null) gamepad.applyPresetSimple();
+            setStatus("已切换为简化键位");
+        }));
+        padEditBar.addView(editBtn("全键", v -> {
+            if (gamepad != null) gamepad.applyPresetFull();
+            setStatus("已切换为全键位");
+        }));
+        padEditBar.addView(editBtn("左手", v -> {
+            if (gamepad == null) return;
+            gamepad.setLeftHanded(!gamepad.isLeftHanded());
+            setStatus(gamepad.isLeftHanded() ? "已切换为左手布局" : "已切换为右手布局");
+        }));
         padEditBar.addView(editBtn("默认", v -> {
             if (gamepad != null) gamepad.resetLayout();
             setStatus("键位布局已恢复默认");
@@ -467,11 +578,12 @@ public class MainActivity extends android.app.Activity {
             super.onPageFinished(view, url);
             progress.setVisibility(View.GONE);
             if (url != null && url.contains("bilibili.com/video/")) {
+                history.addHistory(url, view.getTitle());
                 if (url.equals(lastInjected)) return;
                 lastInjected = url;
                 EngineInjector.inject(MainActivity.this, web);
             } else {
-                statusBar.setText("已加载: " + url);
+                status.notVideo();
             }
         }
 
@@ -600,6 +712,10 @@ public class MainActivity extends android.app.Activity {
     }
 
     void setStatus(final String txt) {
-        runOnUiThread(() -> statusBar.setText(txt));
+        status.info(txt);
+    }
+
+    StatusController status() {
+        return status;
     }
 }

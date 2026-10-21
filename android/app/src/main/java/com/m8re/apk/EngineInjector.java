@@ -44,8 +44,7 @@ final class EngineInjector {
         new Thread(() -> {
             final List<String> chunks = buildChunks(act);
             if (chunks == null || chunks.isEmpty()) return;
-            new Handler(Looper.getMainLooper()).post(() ->
-                    act.setStatus("注入 M8RE(" + chunks.size() + " 块)..."));
+            new Handler(Looper.getMainLooper()).post(() -> act.status().injecting());
             new Handler(Looper.getMainLooper()).post(() -> chunk(act, web, chunks, 0, gen));
         }, "m8re-inject").start();
     }
@@ -53,13 +52,13 @@ final class EngineInjector {
     private static List<String> buildChunks(MainActivity act) {
         List<String> units = new ArrayList<>();
         String shim = readAsset(act, "m8re/host_shim.js");
-        if (shim == null) { act.setStatus("缺少 host_shim.js"); return null; }
+        if (shim == null) { act.status().error("缺少 host_shim.js", "请重新安装应用"); return null; }
         units.add("/* ==== host_shim ==== */\n" + shim + "\n");
         String mouse = readAsset(act, "m8re/_mouse.js");
         if (mouse != null) units.add("/* ==== _mouse ==== */\n" + mouse + "\n");
         for (String f : ENGINE_FILES) {
             String src = readAsset(act, f);
-            if (src == null) { act.setStatus("缺少引擎文件: " + f); return null; }
+            if (src == null) { act.status().error("缺少引擎文件: " + f, "请重新安装应用"); return null; }
             units.add("\n/* ==== " + f + " ==== */\n" + src + "\n");
         }
 
@@ -97,7 +96,7 @@ final class EngineInjector {
 
     private static void done(final MainActivity act, final WebView web, int n, final int gen) {
         if (gen != GEN) return;
-        act.setStatus("脚本已注入(" + n + " 块),等待引擎挂载...");
+        act.status().injectedWaiting();
         act.pushMouseFlag();
         probe(act, web, 0);
     }
@@ -113,7 +112,7 @@ final class EngineInjector {
 
     private static void probe(final MainActivity act, final WebView web, final int tryNo) {
         if (tryNo >= PROBE_TRIES) {
-            act.setStatus("脚本已注入,但未检测到弹幕层(状态 " + lastState + ")");
+            act.status().noDanmakuLayer(diagnose(lastState));
             return;
         }
         try {
@@ -121,15 +120,16 @@ final class EngineInjector {
                 String st = value == null ? "?" : value.replace("\"", "").trim();
                 lastState = st;
                 if (st.contains("O1")) {
-                    act.setStatus("M8RE 引擎已启动 ✓");
+                    act.status().engineReady();
                     return;
                 }
-                act.setStatus("引擎启动中 " + (tryNo + 1) + "/" + PROBE_TRIES + " [" + st + "]");
+                act.status().busy("引擎启动中 " + (tryNo + 1) + "/" + PROBE_TRIES
+                        + " · " + diagnose(st));
                 new Handler(Looper.getMainLooper()).postDelayed(
                         () -> probe(act, web, tryNo + 1), PROBE_GAP_MS);
             });
         } catch (Throwable t) {
-            act.setStatus("引擎探测失败: " + t);
+            act.status().error("引擎探测失败: " + t.getMessage(), "请刷新页面后重试");
         }
     }
 
@@ -145,5 +145,21 @@ final class EngineInjector {
         } catch (Throwable t) {
             return null;
         }
+    }
+
+    static String diagnose(String st) {
+        if (st == null || st.isEmpty()) return "无诊断信息";
+        boolean engine = st.contains("M1");
+        boolean overlay = st.contains("O1");
+        boolean video = st.contains("V1");
+        boolean player = st.contains("P1");
+        StringBuilder sb = new StringBuilder();
+        if (!video) sb.append("页面无 video 元素; ");
+        if (!player) sb.append("未找到播放器容器; ");
+        if (!engine) sb.append("引擎对象未就绪; ");
+        if (video && player && !overlay) sb.append("播放器就绪但弹幕层未挂载; ");
+        if (sb.length() == 0) sb.append("状态: ").append(st);
+        String r = sb.toString();
+        return r.endsWith("; ") ? r.substring(0, r.length() - 2) : r;
     }
 }

@@ -116,6 +116,8 @@ public class GamepadView extends View {
 
         enabled.addAll(loadSaved());
         loadSavedLayout();
+        leftHanded = prefs().getBoolean("leftHanded", false);
+        setAlpha(prefs().getFloat("padAlpha", 1f));
         rebuild();
     }
 
@@ -147,6 +149,43 @@ public class GamepadView extends View {
             invalidate();
         }
     }
+
+    private static final int[] PRESET_SIMPLE = { K_LEFT, K_RIGHT, K_UP, K_DOWN, K_A, K_S, K_W };
+    private static final int[] PRESET_FULL = buildAllCodes();
+
+    void applyPresetSimple() {
+        java.util.List<Integer> l = new java.util.ArrayList<>();
+        for (int c : PRESET_SIMPLE) l.add(c);
+        setEnabledCodes(l);
+    }
+
+    void applyPresetFull() {
+        java.util.List<Integer> l = new java.util.ArrayList<>();
+        for (int c : PRESET_FULL) l.add(c);
+        setEnabledCodes(l);
+    }
+
+    void setAlphaLevel(float a) {
+        setAlpha(Math.max(0.25f, Math.min(1f, a)));
+        prefs().edit().putFloat("padAlpha", getAlpha()).apply();
+    }
+
+    float getAlphaLevel() {
+        return getAlpha();
+    }
+
+    void setLeftHanded(boolean left) {
+        leftHanded = left;
+        prefs().edit().putBoolean("leftHanded", left).apply();
+        if (getWidth() > 0) {
+            layoutButtons(getWidth(), getHeight());
+            invalidate();
+        }
+    }
+
+    boolean isLeftHanded() { return leftHanded; }
+
+    private boolean leftHanded = false;
 
     private void rebuild() {
         buttons.clear();
@@ -377,7 +416,7 @@ public class GamepadView extends View {
         float margin = 28 * d;
         float gap = 12 * d;
 
-        float cx = padRadius + margin;
+        float cx = leftHanded ? (w - margin - padRadius) : (padRadius + margin);
         float cy = h - padRadius - margin;
         float r = padRadius;
         place(K_UP, cx - r * 0.42f, cy - r, cx + r * 0.42f, cy - r * 0.15f);
@@ -385,7 +424,9 @@ public class GamepadView extends View {
         place(K_LEFT, cx - r, cy - r * 0.42f, cx - r * 0.15f, cy + r * 0.42f);
         place(K_RIGHT, cx + r * 0.15f, cy - r * 0.42f, cx + r, cy + r * 0.42f);
 
-        float wCx = w - margin - btnRadius * 2 - gap;
+        float wCx = leftHanded
+                ? (margin + btnRadius * 2 + gap)
+                : (w - margin - btnRadius * 2 - gap);
         float wCy = h - margin - btnRadius * 2 - gap;
         float wr = btnRadius;
         place(K_W, wCx - wr, wCy - wr * 2 - gap, wCx + wr, wCy - gap);

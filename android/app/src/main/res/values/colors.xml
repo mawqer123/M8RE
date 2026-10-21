@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="holo_blue_bright">#ff00ddff</color>
+    <color name="holo_blue_light">#ff33b5e5</color>
+    <color name="holo_blue_dark">#ff0099cc</color>
+    <color name="holo_purple">#ffaa66cc</color>
+    <color name="holo_green_light">#ff99cc00</color>
+    <color name="holo_green_dark">#ff669900</color>
+    <color name="holo_red_light">#ffff4444</color>
+    <color name="holo_red_dark">#ffcc0000</color>
+    <color name="holo_orange_light">#ffffbb33</color>
+    <color name="holo_orange_dark">#ffff8800</color>
+
+    <color name="topbar_top">#ff2b2b2b</color>
+    <color name="topbar_bottom">#ff171717</color>
+    <color name="urlbar_bg">#ff0d0d0d</color>
+    <color name="urlbar_text">#ffe8e8e8</color>
+    <color name="urlbar_hint">#ff777777</color>
+    <color name="divider">#ff33b5e5</color>
+
+    <color name="status_idle">#ff262626</color>
+    <color name="status_loading">#ff0099cc</color>
+    <color name="status_ok">#ff669900</color>
+    <color name="status_warn">#ffff8800</color>
+    <color name="status_error">#ffcc0000</color>
+    <color name="status_text">#ffffffff</color>
+</resources>

@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="AppTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@android:color/white</item>
+    <style name="AppTheme" parent="@android:style/Theme.Holo.NoActionBar">
+        <item name="android:windowBackground">@color/status_idle</item>
+        <item name="android:colorBackground">@color/status_idle</item>
+    </style>
+
+    <style name="HoloBarButton">
+        <item name="android:background">@drawable/holo_button_bg</item>
+        <item name="android:textColor">#ffffffff</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:paddingLeft">@dimen/btn_pad_h</item>
+        <item name="android:paddingRight">@dimen/btn_pad_h</item>
+        <item name="android:paddingTop">@dimen/btn_pad_v</item>
+        <item name="android:paddingBottom">@dimen/btn_pad_v</item>
+        <item name="android:gravity">center</item>
     </style>
 </resources>
