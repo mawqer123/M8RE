@@ -1,5 +1,7 @@
 # M8RE
 
+English | [中文](README.zh-CN.md)
+
 **Bilibili Mode 8 Danmaku JS Runtime Environment (OR Emulator).**
 
 M8RE is a Chrome extension that revives the Flash-era **M8 code danmaku** (mode 8, a.k.a. *biliscript*) on the modern bilibili HTML5 player. It re-implements the original M8 virtual machine from scratch in JavaScript and runs it as an overlay on the page.
@@ -78,5 +80,4 @@ under [`android/`](android/). The upstream extension code (`content/`, `backgrou
   [android/README.md](android/README.md)
 - Engine sources live in the repository root `content/` and are synced by
   `android/build.sh` at build time, so there is only one copy in git
-- Chinese documentation: [README.zh-CN.md](README.zh-CN.md)
 - File issues in this fork, **please do not bother the upstream author**

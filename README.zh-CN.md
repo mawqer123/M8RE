@@ -1,12 +1,13 @@
 # M8RE
 
+[English](README.md) | 中文
+
 **bilibili Mode 8 弹幕 JS 运行时环境（或模拟器）。**
 
 M8RE 是一个 Chrome 扩展，用于在现代 bilibili HTML5 播放器上复活 Flash 时代的
 **M8 代码弹幕**（mode 8，又称 *biliscript*）。它用 JavaScript 从零重新实现了当年的
 M8 虚拟机，并作为浮层运行在页面上。
 
-[English](README.md) | 中文
 
 ## 背景
 
