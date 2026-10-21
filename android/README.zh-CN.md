@@ -112,23 +112,6 @@ cd android
 
 版本号只在 `build.sh` 顶部的 `APP_VERSION_NAME` / `APP_VERSION_CODE` 定义一次。
 
-### 用自己的密钥签名（发布用）
-
-仓库里的 `debug.keystore` 仅用于本地测试。发布请使用你自己的密钥：
-
-```bash
-export M8_KEYSTORE=/path/to/your.jks
-export M8_KS_PASS='<store 密码>'      # 自己填
-export M8_KEY_ALIAS='<alias>'
-export M8_KEY_PASS='<key 密码>'
-./build.sh
-```
-
-不设置这些变量时回退到 `debug.keystore`（口令 `android`）。
-**不要把真实密钥和密码提交进仓库。**
-
----
-
 ## 项目结构
 
 ```

@@ -127,23 +127,6 @@ dropped and leave the engine unloaded.
 The version is defined once at the top of `build.sh` via `APP_VERSION_NAME` /
 `APP_VERSION_CODE`.
 
-### Sign with your own key (for releases)
-
-The committed `debug.keystore` is for local testing only. For releases use your own key:
-
-```bash
-export M8_KEYSTORE=/path/to/your.jks
-export M8_KS_PASS='<store password>'
-export M8_KEY_ALIAS='<alias>'
-export M8_KEY_PASS='<key password>'
-./build.sh
-```
-
-Without these variables the build falls back to `debug.keystore` (password `android`).
-**Never commit a real keystore or its passwords.**
-
----
-
 ## Layout
 
 ```
