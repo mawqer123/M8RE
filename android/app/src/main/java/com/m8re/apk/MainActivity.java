@@ -149,14 +149,38 @@ public class MainActivity extends android.app.Activity {
         web.addJavascriptInterface(new M8LogBridge(), "M8NativeLog");
     }
 
+    private static final String[] ALLOWED_HOSTS = {
+            "bilibili.com", "www.bilibili.com", "m.bilibili.com",
+            "passport.bilibili.com", "space.bilibili.com",
+            "search.bilibili.com", "t.bilibili.com", "live.bilibili.com",
+            "b23.tv", "bili2233.cn"
+    };
+
+    static boolean isAllowedUrl(String url) {
+        if (url == null) return false;
+        String u = url.trim().toLowerCase();
+        if (u.startsWith("about:") || u.startsWith("javascript:")) return false;
+        String host;
+        try {
+            host = android.net.Uri.parse(u).getHost();
+        } catch (Exception e) {
+            return false;
+        }
+        if (host == null) return false;
+        for (String h : ALLOWED_HOSTS) {
+            if (host.equals(h) || host.endsWith("." + h)) return true;
+        }
+        return false;
+    }
+
     private String resolveInput(String raw) {
         if (raw == null) return HOME_URL;
         String t = raw.trim();
         if (t.isEmpty()) return HOME_URL;
         if (t.matches("(?i)^BV[0-9A-Za-z]+$")) return "https://www.bilibili.com/video/" + t;
         if (t.matches("(?i)^av\\d+$")) return "https://www.bilibili.com/video/" + t;
-        if (!t.startsWith("http")) return "https://" + t;
-        return t;
+        String full = t.startsWith("http") ? t : "https://" + t;
+        return isAllowedUrl(full) ? full : null;
     }
 
     private static String extractUrl(String s) {
@@ -172,7 +196,12 @@ public class MainActivity extends android.app.Activity {
     }
 
     private void navigate(String url) {
-        if (url == null || url.isEmpty()) url = HOME_URL;
+        if (url == null || url.isEmpty()) {
+            url = HOME_URL;
+        } else if (!isAllowedUrl(url)) {
+            status.error(getString(R.string.st_blocked), getString(R.string.hint_restricted));
+            return;
+        }
         urlBar.setText(url);
         web.loadUrl(url);
     }
@@ -554,10 +583,11 @@ public class MainActivity extends android.app.Activity {
 
             if (host.endsWith("bilibili.com") || host.endsWith("hdslb.com")
                     || host.endsWith("bilivideo.com") || host.endsWith("biliapi.net")
-                    || host.endsWith("bilibili.co")) {
+                    || host.endsWith("bilibili.co") || host.endsWith("b23.tv")
+                    || host.endsWith("bili2233.cn")) {
                 return false;
             }
-            try { startActivity(new Intent(Intent.ACTION_VIEW, u)); } catch (Exception ignored) {}
+            status.error(getString(R.string.st_blocked), getString(R.string.hint_restricted));
             return true;
         }
 
@@ -698,6 +728,9 @@ public class MainActivity extends android.app.Activity {
         if (intent != null && Intent.ACTION_VIEW.equals(intent.getAction())
                 && intent.getData() != null) {
             navigate(intent.getData().toString());
+        } else if (intent != null && Intent.ACTION_SEND.equals(intent.getAction())) {
+            String txt = intent.getStringExtra(Intent.EXTRA_TEXT);
+            if (txt != null) navigate(resolveInput(extractUrl(txt)));
         }
     }
 

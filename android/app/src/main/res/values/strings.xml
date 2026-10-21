@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">M8RE</string>
 
-    <string name="hint_url">bilibili 链接或 BV 号</string>
+    <string name="hint_url">仅支持 bilibili 链接或 BV 号</string>
     <string name="btn_go">前往</string>
     <string name="btn_home">主页</string>
     <string name="btn_back">返回</string>
@@ -27,6 +27,8 @@
     <string name="act_retry">可点「重试注入」再试一次</string>
     <string name="act_reload">请刷新页面后重试</string>
     <string name="act_check_net">请检查网络连接</string>
+    <string name="hint_restricted">本应用仅用于访问 bilibili 视频页</string>
+    <string name="st_blocked">已拦截：本应用只访问 bilibili</string>
 
     <string name="pad_edit_hint">编辑模式：拖动移动，双指缩放</string>
     <string name="pad_simple">简化</string>

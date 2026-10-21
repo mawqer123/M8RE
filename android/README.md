@@ -77,6 +77,18 @@ Direct APK for v1.0:
 
 ---
 
+## This is not a browser
+
+This app is **only for opening bilibili video pages**, not a general-purpose browser.
+
+- The URL field accepts bilibili links or BV / av ids only; anything else is blocked
+- Off-site links inside a video page are refused, not opened, and not handed to an
+  external browser
+- Non-bilibili links shared from other apps are refused as well
+
+The app exists to run the M8RE engine and is neither suited nor intended to be used
+as a browser.
+
 ## Install
 
 1. Download `M8RE-*.apk` from Releases.
