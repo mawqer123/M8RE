@@ -9,13 +9,6 @@ import java.net.URL;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-/**
- * 面向 bilibili API 与弹幕 CDN 的极简 HTTP 客户端。
- *
- * 替代原扩展后台 service worker 的 fetch（它的作用就是绕过 CORS 并带上页面
- * 的 cookie）。在后台线程运行；cookie 由调用方通过 Cookie 头传入，
- * 取自 WebView 会话。
- */
 final class M8Http {
     private static final String TAG = "M8RE-http";
     private static final int TIMEOUT_MS = 20000;
@@ -47,8 +40,7 @@ final class M8Http {
                     String k = e.getKey();
                     if (k == null || e.getValue() == null) continue;
                     String lk = k.toLowerCase();
-                    // 不要用浏览器传来的头覆盖上面已经设好的关键头
-                    // （例如 "accept-encoding: br"，本端没有 brotli 解码器）。
+
                     if (lk.equals("accept-encoding") || lk.equals("host")
                             || lk.equals("connection") || lk.equals("content-length")) continue;
                     conn.setRequestProperty(k, e.getValue());

@@ -28,18 +28,6 @@ import android.widget.TextView;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * M8RE 的 Android 宿主。
- *
- * 单 Activity 的 WebView，以桌面版方式加载 bilibili 视频页，并注入（未经修改的）
- * M8RE 引擎脚本，同时替换引擎原本依赖的三个 Chrome 扩展接口：
- *
- *   chrome.runtime.sendMessage（后台跨域代理） -> M8NetBridge + shouldInterceptRequest
- *   chrome.runtime.getURL（inject.js）         -> 由宿主注入到页面
- *   chrome.storage.local（排行/存档）           -> localStorage（优雅降级）
- *
- * 引擎本体（VM、图形、宿主 API）自上游仓库原样打包，未作任何修改。
- */
 public class MainActivity extends android.app.Activity {
 
     static final String TAG = "M8RE";
@@ -59,10 +47,8 @@ public class MainActivity extends android.app.Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 弹幕播放期间保持屏幕常亮。
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        // ---- 根布局：竖向 [顶部栏][WebView] ----
         root = new FrameLayout(this);
         LinearLayout vertical = new LinearLayout(this);
         vertical.setOrientation(LinearLayout.VERTICAL);
@@ -141,7 +127,6 @@ public class MainActivity extends android.app.Activity {
 
         configureWebView();
 
-        // ---- on-screen gamepad overlay (on top of the WebView) ----
         gamepad = new GamepadView(this, web);
         FrameLayout.LayoutParams glp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -154,7 +139,6 @@ public class MainActivity extends android.app.Activity {
             sizeBar.setProgress(Math.max(0, Math.min(200, pr)));
         });
 
-        // 处理链接/分享的 Intent。
         String startUrl = HOME_URL;
         Intent it = getIntent();
         if (it != null) {
@@ -169,9 +153,6 @@ public class MainActivity extends android.app.Activity {
         navigate(startUrl);
     }
 
-    // ------------------------------------------------------------------
-    // WebView configuration
-    // ------------------------------------------------------------------
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     private void configureWebView() {
         WebSettings s = web.getSettings();
@@ -189,8 +170,7 @@ public class MainActivity extends android.app.Activity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
-        // 必须是桌面版 UA：引擎写死了 .bpx-player-* 这套桌面播放器的 DOM 选择器；
-        // 若用移动端 UA 会拿到 m 站布局，所有选择器都会落空。
+
         s.setUserAgentString(desktopUserAgent());
 
         CookieManager cm = CookieManager.getInstance();
@@ -209,7 +189,6 @@ public class MainActivity extends android.app.Activity {
         });
         web.setBackgroundColor(0xFF000000);
 
-        // JS 调用原生用的桥，供注入的 fetch shim 使用。
         web.addJavascriptInterface(new M8NetBridge(), "M8Native");
         web.addJavascriptInterface(new M8LogBridge(), "M8NativeLog");
     }
@@ -231,8 +210,7 @@ public class MainActivity extends android.app.Activity {
     }
 
     private static String desktopUserAgent() {
-        // A recent desktop Chrome UA. bilibili also checks Sec-CH-UA client
-        // hints on some endpoints; a plain UA is enough for the player DOM.
+
         return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                 + "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
     }
@@ -244,12 +222,11 @@ public class MainActivity extends android.app.Activity {
     }
 
     private boolean padVisible = true;
-    private boolean mouseOn = true;               // 点击层(触摸→鼠标),默认开
+    private boolean mouseOn = true;
     private android.widget.Button mouseToggleBtn;
     private long lastStatusAt = 0;
     private String lastInjected = "";
 
-    /** 把当前点击层开关推进页面(shim 注入后会重置)。 */
     void pushMouseFlag() {
         if (web == null) return;
         web.evaluateJavascript("window.__moMouseTakeover=" + (mouseOn ? "true" : "false") + ";",
@@ -273,7 +250,6 @@ public class MainActivity extends android.app.Activity {
     private android.widget.SeekBar sizeBar;
     private android.widget.TextView sizeHint;
 
-    /** 布局编辑工具条:改大小(滑条) / 增删键位 / 恢复默认 / 完成。 */
     private void buildPadEditBar(LinearLayout vertical) {
         padEditBar = new LinearLayout(this);
         padEditBar.setOrientation(LinearLayout.HORIZONTAL);
@@ -325,14 +301,13 @@ public class MainActivity extends android.app.Activity {
         return b;
     }
 
-    /** 长按「手柄」的入口。 */
     private void togglePadEdit() {
         setPadEditMode(gamepad == null || !gamepad.isEditMode());
     }
 
     private void setPadEditMode(boolean on) {
         if (gamepad == null) return;
-        if (on && !padVisible) {                 // 手柄隐藏着就先显示出来
+        if (on && !padVisible) {
             padVisible = true;
             gamepad.setPadVisible(true);
             padToggleBtn.setText("手柄");
@@ -344,10 +319,6 @@ public class MainActivity extends android.app.Activity {
                 : "布局已保存");
     }
 
-    /**
-     * 长按顶栏「手柄」打开键位编辑:勾掉不要的键就从盘上删掉,只留移动键也行。
-     * 选择会存进 SharedPreferences,下次启动照旧。
-     */
     private void showPadEditor() {
         if (gamepad == null) return;
         final java.util.Set<Integer> cur = gamepad.getEnabledCodes();
@@ -464,15 +435,12 @@ public class MainActivity extends android.app.Activity {
         setStatus(padVisible ? "虚拟手柄已开启(长按「手柄」编辑键位)" : "虚拟手柄已隐藏");
     }
 
-    // ------------------------------------------------------------------
-    // WebViewClient: page load + network interception
-    // ------------------------------------------------------------------
     private class M8WebViewClient extends WebViewClient {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
             Uri u = req.getUrl();
             String host = u.getHost() == null ? "" : u.getHost();
-            // Keep bilibili + CDN in-app; push everything else to the browser.
+
             if (host.endsWith("bilibili.com") || host.endsWith("hdslb.com")
                     || host.endsWith("bilivideo.com") || host.endsWith("biliapi.net")
                     || host.endsWith("bilibili.co")) {
@@ -482,18 +450,6 @@ public class MainActivity extends android.app.Activity {
             return true;
         }
 
-        /**
-         * 故意什么都不拦。
-         *
-         * 之前这里会把 api.bilibili.com / *.hdslb.com 的请求用原生 HTTP 重新取一遍
-         * 再塞回 WebView。问题有两个,都会让页面"崩坏/渲染成普通视频":
-         *   1. 它连播放器自己的 playurl/search 等请求也一起拦了,回包的
-         *      Content-Type/CORS/Range/Set-Cookie 都是我们自己拼的,播放器拿到的
-         *      不是它要的东西;
-         *   2. 原生请求不带页面的会话,登录态/风控数据全丢。
-         * 引擎自己需要的弹幕数据走 host_shim 包装过的 fetch → 原生桥(M8Native),
-         * 不需要在 WebView 层再插一手,所以这里直接放行。
-         */
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
             return null;
@@ -502,7 +458,7 @@ public class MainActivity extends android.app.Activity {
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             super.onPageStarted(view, url, favicon);
-            EngineInjector.newDocument();       // 旧页面的注入链就此作废
+            EngineInjector.newDocument();
             lastInjected = "";
         }
 
@@ -511,7 +467,7 @@ public class MainActivity extends android.app.Activity {
             super.onPageFinished(view, url);
             progress.setVisibility(View.GONE);
             if (url != null && url.contains("bilibili.com/video/")) {
-                if (url.equals(lastInjected)) return;   // 同一个页面只注入一次
+                if (url.equals(lastInjected)) return;
                 lastInjected = url;
                 EngineInjector.inject(MainActivity.this, web);
             } else {
@@ -522,7 +478,7 @@ public class MainActivity extends android.app.Activity {
         @Override
         public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
             super.doUpdateVisitedHistory(view, url, isReload);
-            // bilibili 是 SPA:站内跳转到另一个视频时不会重新 onPageFinished
+
             if (url != null && url.contains("bilibili.com/video/") && !url.equals(lastInjected)) {
                 lastInjected = url;
                 EngineInjector.newDocument();
@@ -538,15 +494,10 @@ public class MainActivity extends android.app.Activity {
         return "application/octet-stream";
     }
 
-    // ------------------------------------------------------------------
-    // JS bridges
-    // ------------------------------------------------------------------
-
-    /** Synchronous-ish network bridge (actually returns via callback). */
     public class M8NetBridge {
         @JavascriptInterface
         public void get(final String url, final String reqId) {
-            // 页面会话 cookie 必须跟着走,否则弹幕/清晰度接口拿到的是游客数据
+
             String cookie = null;
             try {
                 cookie = CookieManager.getInstance().getCookie(
@@ -582,7 +533,7 @@ public class MainActivity extends android.app.Activity {
             if (msg == null) return;
             Log.i(TAG + "-js", msg);
             final long now = System.currentTimeMillis();
-            if (now - lastStatusAt < 250) return;      // 别把状态栏刷爆
+            if (now - lastStatusAt < 250) return;
             lastStatusAt = now;
             String one = msg.replace("\n", " ");
             if (one.length() > 90) one = one.substring(0, 90) + "…";

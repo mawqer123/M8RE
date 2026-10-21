@@ -59,19 +59,24 @@ Released under the [MIT License](LICENSE).
 
 ---
 
-## Android 移植版（本 fork 新增）
+## Android port (added in this fork)
 
-本 fork 在 `android/` 下增加了把 M8RE 引擎打包成**纯 APK** 的代码与工具。
-上游的扩展代码（`content/`、`background/`、`manifest.json`）保持原样，一行未改。
+This fork adds everything needed to package the M8RE engine as a **standalone APK**
+under [`android/`](android/). The upstream extension code (`content/`, `background/`,
+`manifest.json`) is left untouched.
 
-> **⚠️ 本项目纯 AI 生成，仅做过测试与少量实际使用体验，不代表在你的手机机型上一定能正常工作。**
-> 可能出现闪退、卡顿、黑屏或按钮失灵等问题。**如有任何问题，请立即上报给本移植版的作者
-> [mawqer123](https://github.com/mawqer123)，不要打扰上游作者 mtdcmz。**
-> 上游 M8RE 与此移植版无关，上游作者不承担任何责任。
+> **⚠️ This port is entirely AI-generated. It has only been tested and used briefly.
+> It is not guaranteed to work on your device or Android/WebView version.**
+> It may crash, stutter, show a black screen, or have unresponsive buttons.
+> **Please report any issue to the port's author [mawqer123](https://github.com/mawqer123),
+> not to the upstream author mtdcmz.** The upstream M8RE project is unrelated to this
+> port and its author bears no responsibility for it.
 
-- 下载：**https://github.com/mawqer123/M8RE/releases/latest**
-- 指定版本：**https://github.com/mawqer123/M8RE/releases/tag/v1.0**
-- 安装、构建、虚拟手柄键位、许可与免责声明见 [android/README.md](android/README.md)
-- 引擎源码位于仓库根的 `content/`，`android/build.sh` 会在构建时自动同步，
-  因此不存在两份会不一致的副本
-- 有问题请在本 fork 提 issue，**不要打扰上游作者**
+- Download: **https://github.com/mawqer123/M8RE/releases/latest**
+- Pinned version: **https://github.com/mawqer123/M8RE/releases/tag/v1.0**
+- Installation, build instructions, gamepad key map, license and disclaimer:
+  [android/README.md](android/README.md)
+- Engine sources live in the repository root `content/` and are synced by
+  `android/build.sh` at build time, so there is only one copy in git
+- Chinese documentation: [README.zh-CN.md](README.zh-CN.md)
+- File issues in this fork, **please do not bother the upstream author**

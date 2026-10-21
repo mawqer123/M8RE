@@ -9,22 +9,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 从 assets/m8re/ 读取 M8RE 引擎 JS（来自上游仓库，原样未改），
- * 注入到已加载的 bilibili 视频页面中。
- *
- * 注入顺序：宿主 shim -> 鼠标层 -> 引擎各文件（与 manifest.json 一致）。
- *
- * 有两点是踩过坑之后才加上的：
- *
- *  1. evaluateJavascript() 一律传入真实的 ValueCallback。部分 WebView 实现
- *     在回调为 null 时会静默丢弃脚本，表现和「引擎根本没启动」完全一样。
- *  2. 按整文件为单位分块注入，块与块之间用回调链推进（另有超时兜底），
- *     而不是一次性 eval 约 330 KB，避免单次巨大 eval 被截断或阻塞 UI 线程。
- */
 final class EngineInjector {
 
-    // 顺序与 manifest.json 的 content_scripts.js 一致
     static final String[] ENGINE_FILES = {
             "m8re/00_ns.js",
             "m8re/01_scanner.js",
@@ -43,11 +29,10 @@ final class EngineInjector {
             "m8re/14_main.js",
     };
 
-    private static final int CHUNK_GAP_MS = 80;  // fallback pacing
+    private static final int CHUNK_GAP_MS = 80;
     private static final int PROBE_TRIES = 12;
     private static final int PROBE_GAP_MS = 2500;
 
-    /** Bumped on every new document so a stale chunk chain aborts itself. */
     private static volatile int GEN = 0;
 
     static void newDocument() {
@@ -65,13 +50,6 @@ final class EngineInjector {
         }, "m8re-inject").start();
     }
 
-    /**
-     * 每个 evaluateJavascript 调用的内容,按"完整文件"为单位拼装。
-     *
-     * 这里曾经按字符数在换行处切块 —— 结果是每块都切在函数中间,单块 eval 直接
-     * 语法错误被整块丢弃,引擎等于一行都没加载("一直检测不到弹幕"就是这个原因)。
-     * 引擎的每个 .js 都是一个完整 IIFE,所以只要不切断文件,单块一定是合法 JS。
-     */
     private static List<String> buildChunks(MainActivity act) {
         List<String> units = new ArrayList<>();
         String shim = readAsset(act, "m8re/host_shim.js");
@@ -85,7 +63,6 @@ final class EngineInjector {
             units.add("\n/* ==== " + f + " ==== */\n" + src + "\n");
         }
 
-        // 小文件合并成块(仍然不切断任何文件),大文件独占一块
         List<String> out = new ArrayList<>();
         StringBuilder cur = new StringBuilder();
         for (String u : units) {
@@ -101,7 +78,7 @@ final class EngineInjector {
 
     private static void chunk(final MainActivity act, final WebView web,
                               final List<String> chunks, final int index, final int gen) {
-        if (gen != GEN) return;                       // a new page took over
+        if (gen != GEN) return;
         if (index >= chunks.size()) { done(act, web, chunks.size(), gen); return; }
         final boolean[] advanced = { false };
         final Runnable next = () -> {
@@ -121,7 +98,7 @@ final class EngineInjector {
     private static void done(final MainActivity act, final WebView web, int n, final int gen) {
         if (gen != GEN) return;
         act.setStatus("脚本已注入(" + n + " 块),等待引擎挂载...");
-        act.pushMouseFlag();                          // restore the click-layer switch
+        act.pushMouseFlag();
         probe(act, web, 0);
     }
 

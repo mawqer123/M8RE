@@ -14,28 +14,15 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 屏幕虚拟手柄浮层。
- *
- * 按键与 M8RE 引擎实际接受的 keyCode 白名单一一对应
- * （11_hostapi.js 中的 ScriptEventManager._allow）：
- *
- *   27（Esc）| 34..40（PgDn End Home ← ↑ → ↓）| 65（A）68（D）83（S）87（W）
- *   | 96..105（小键盘 0-9）
- *
- * 其余按键会被引擎过滤掉，多加没有意义。按键通过宿主 shim 安装的
- * window.__moKey 下发，由它合成一个携带旧版 keyCode 的真实 keydown/keyup。
- */
 public class GamepadView extends View {
 
     static final String TAG = "M8RE-pad";
 
-    // --- keyCodes accepted by the engine's _allow() whitelist ---
     static final int K_ESC = 27;
     static final int K_PGDN = 34, K_END = 35, K_HOME = 36;
     static final int K_LEFT = 37, K_UP = 38, K_RIGHT = 39, K_DOWN = 40;
     static final int K_A = 65, K_D = 68, K_S = 83, K_W = 87;
-    static final int K_NUMPAD0 = 96;   // .. K_NUMPAD9 = 105
+    static final int K_NUMPAD0 = 96;
 
     private final WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -44,7 +31,7 @@ public class GamepadView extends View {
     private final Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint small = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint selStroke = new Paint(Paint.ANTI_ALIAS_FLAG);   // 编辑选中框
+    private final Paint selStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private static class Btn {
         String label; int code; RectF rect = new RectF();
@@ -53,20 +40,18 @@ public class GamepadView extends View {
         Btn(String l, int c, boolean round) { label = l; code = c; this.round = round; }
     }
 
-    private final List<Btn> all = new ArrayList<>();     // 全部可用键
-    private final List<Btn> buttons = new ArrayList<>(); // 当前显示(未删除)的键
+    private final List<Btn> all = new ArrayList<>();
+    private final List<Btn> buttons = new ArrayList<>();
     private final java.util.Set<Integer> enabled = new java.util.HashSet<>();
-    /** 用户拖过/缩过的键:code -> {left,top,right,bottom} 相对 view 宽高的比例 */
+
     private final java.util.Map<Integer, float[]> user = new java.util.HashMap<>();
     private boolean hasUser = false;
 
-    // ---- 布局编辑状态 ----
     private boolean editMode = false;
     private Btn sel = null;
     private float lastX, lastY, pinch0, pinchW0, pinchH0;
     private float minSize, maxSize;
 
-    /** 编辑模式下选中项变化(顶栏尺寸滑条要跟着走)。 */
     interface EditListener { void onPadSelection(int code, String label, float sizePx); }
     private EditListener listener;
     void setEditListener(EditListener l) { listener = l; }
@@ -77,7 +62,7 @@ public class GamepadView extends View {
     int getSelectedCode() { return sel == null ? -1 : sel.code; }
     float getSelectedSizePx() { return sel == null ? 0 : sel.rect.width(); }
 
-    private float padRadius;   // dp sizes
+    private float padRadius;
     private float btnRadius;
     private float numRadius;
     private boolean visible = true;
@@ -93,23 +78,19 @@ public class GamepadView extends View {
         btnRadius = 30 * d;
         numRadius = 23 * d;
 
-        // D-pad (arrows)
         all.add(new Btn("\u2190", K_LEFT, true));
         all.add(new Btn("\u2191", K_UP, true));
         all.add(new Btn("\u2192", K_RIGHT, true));
         all.add(new Btn("\u2193", K_DOWN, true));
 
-        // W A S D diamond
         all.add(new Btn("W", K_W, true));
         all.add(new Btn("A", K_A, true));
         all.add(new Btn("S", K_S, true));
         all.add(new Btn("D", K_D, true));
 
-        // rare keys
         all.add(new Btn("Esc", K_ESC, false));
         all.add(new Btn("Home", K_HOME, false));
 
-        // 小键盘 0-9（PgDn/End 等两位数标签放在最后一行）
         for (int i = 0; i <= 9; i++) {
             all.add(new Btn(String.valueOf(i), K_NUMPAD0 + i, true));
         }
@@ -133,12 +114,10 @@ public class GamepadView extends View {
         minSize = 16 * d;
         maxSize = 200 * d;
 
-        enabled.addAll(loadSaved());      // 没存过 = 全部显示
+        enabled.addAll(loadSaved());
         loadSavedLayout();
         rebuild();
     }
-
-    // ---------------- 键位编辑 ----------------
 
     static final int[] MOVE_CODES = { K_UP, K_DOWN, K_LEFT, K_RIGHT, K_W, K_A, K_S, K_D };
     static final int[] OTHER_CODES = { K_ESC, K_HOME, K_PGDN, K_END };
@@ -152,16 +131,14 @@ public class GamepadView extends View {
         return a;
     }
 
-    /** 当前显示的键(给编辑界面用)。 */
     java.util.Set<Integer> getEnabledCodes() {
         return new java.util.HashSet<>(enabled);
     }
 
-    /** 应用"哪些键显示在左盘上",并落盘。 */
     void setEnabledCodes(java.util.Collection<Integer> codes) {
         enabled.clear();
         if (codes != null) enabled.addAll(codes);
-        if (enabled.isEmpty()) enabled.add(K_W);      // 别把盘删空
+        if (enabled.isEmpty()) enabled.add(K_W);
         rebuild();
         hideAndRelease();
         saveSaved();
@@ -205,9 +182,6 @@ public class GamepadView extends View {
         return getContext().getSharedPreferences("m8re-pad", Context.MODE_PRIVATE);
     }
 
-    // ---------------- 布局编辑 ----------------
-
-    /** 进入/退出拖动缩放编辑。退出时落盘。 */
     void setEditMode(boolean on) {
         editMode = on;
         sel = null;
@@ -217,7 +191,6 @@ public class GamepadView extends View {
         invalidate();
     }
 
-    /** 顶栏滑条:调整选中键的大小(按宽度,等比缩放)。 */
     void setSelectedSizePx(float wpx) {
         if (sel == null) return;
         float w0 = sel.rect.width(), h0 = sel.rect.height();
@@ -232,7 +205,6 @@ public class GamepadView extends View {
         invalidate();
     }
 
-    /** 丢掉所有自定义位置,回到默认布局。 */
     void resetLayout() {
         user.clear();
         hasUser = false;
@@ -252,7 +224,7 @@ public class GamepadView extends View {
                 pinch0 = 0;
                 notifySel();
                 invalidate();
-                return true;                     // 编辑模式吃掉触摸,别漏给网页
+                return true;
             }
             case MotionEvent.ACTION_POINTER_DOWN: {
                 if (sel != null && ev.getPointerCount() >= 2) {
@@ -341,7 +313,7 @@ public class GamepadView extends View {
             if (b == null) continue;
             float[] f = e.getValue();
             float l = f[0] * w, t = f[1] * h, r = f[2] * w, bo = f[3] * h;
-            if (r - l < minSize || bo - t < minSize * 0.5f) continue;   // 脏数据丢掉
+            if (r - l < minSize || bo - t < minSize * 0.5f) continue;
             b.rect.set(l, t, r, bo);
         }
     }
@@ -394,19 +366,17 @@ public class GamepadView extends View {
         return null;
     }
 
-    /** 摆放某个键;该键被删除时啥也不做(原来直接 find().rect 会 NPE)。 */
     private void place(int code, float l, float t, float r, float b) {
         Btn btn = find(code);
         if (btn != null) btn.rect.set(l, t, r, b);
     }
 
     private void layoutButtons(int w, int h) {
-        for (Btn b : all) b.rect.setEmpty();     // 被删掉的键不许留热区
+        for (Btn b : all) b.rect.setEmpty();
         float d = getResources().getDisplayMetrics().density;
         float margin = 28 * d;
         float gap = 12 * d;
 
-        // ---- D-pad, bottom-left ----
         float cx = padRadius + margin;
         float cy = h - padRadius - margin;
         float r = padRadius;
@@ -415,8 +385,7 @@ public class GamepadView extends View {
         place(K_LEFT, cx - r, cy - r * 0.42f, cx - r * 0.15f, cy + r * 0.42f);
         place(K_RIGHT, cx + r * 0.15f, cy - r * 0.42f, cx + r, cy + r * 0.42f);
 
-        // ---- W A S D diamond, bottom-right ----
-        float wCx = w - margin - btnRadius * 2 - gap;      // WASD cluster centre
+        float wCx = w - margin - btnRadius * 2 - gap;
         float wCy = h - margin - btnRadius * 2 - gap;
         float wr = btnRadius;
         place(K_W, wCx - wr, wCy - wr * 2 - gap, wCx + wr, wCy - gap);
@@ -424,7 +393,6 @@ public class GamepadView extends View {
         place(K_A, wCx - wr * 2 - gap, wCy - wr, wCx - gap, wCy + wr);
         place(K_D, wCx + gap, wCy - wr, wCx + wr * 2 + gap, wCy + wr);
 
-        // ---- numpad 3x4 grid, bottom-centre ----
         float cell = numRadius * 2 + 10 * d;
         float gridW = cell * 3, gridH = cell * 4;
         float gx = (w - gridW) / 2f;
@@ -437,7 +405,7 @@ public class GamepadView extends View {
             Btn b = find(K_NUMPAD0 + rows[i]);
             if (b != null) b.rect.set(bx - numRadius, by - numRadius, bx + numRadius, by + numRadius);
         }
-        // last row: PgDn  0  End
+
         for (int col = 0; col < 3; col++) {
             float bx = gx + col * cell + cell / 2f;
             float by = gy + 3 * cell + cell / 2f;
@@ -446,7 +414,6 @@ public class GamepadView extends View {
             if (b != null) b.rect.set(bx - half, by - half, bx + half, by + half);
         }
 
-        // ---- Esc + Home, top-left pills ----
         float pillH = 30 * d, pillW = 52 * d;
         place(K_ESC, margin, 18 * d, margin + pillW, 18 * d + pillH);
         place(K_HOME, margin + pillW + gap, 18 * d, margin + pillW * 2 + gap, 18 * d + pillH);
@@ -501,7 +468,6 @@ public class GamepadView extends View {
         }
     }
 
-    /** 当前手势是否由手柄接管(没按到按钮就完全不碰,让网页自己处理)。 */
     private boolean active = false;
 
     @Override
@@ -511,8 +477,7 @@ public class GamepadView extends View {
         final int action = ev.getActionMasked();
 
         if (action == MotionEvent.ACTION_DOWN) {
-            // 只有按在按钮上才接管这个手势,否则返回 false 交还给 WebView。
-            // 之前无条件 return true,等于手柄把整个页面的触摸全吃掉了。
+
             active = hitAny(ev.getX(), ev.getY());
             if (!active) return false;
         } else if (!active) {
@@ -547,7 +512,6 @@ public class GamepadView extends View {
         return false;
     }
 
-    /** 多指:按每个指针的位置更新所有键的按下/松开态。 */
     private void syncPressed(MotionEvent ev, int skipIndex) {
         for (Btn b : buttons) {
             if (b.rect.isEmpty()) continue;
@@ -579,22 +543,17 @@ public class GamepadView extends View {
         if (b.code >= 0) dispatchKey(b.code, false, b.label, false);
     }
 
-    /**
-     * 按住不放时按真实键盘的自动重复节奏继续发 keydown。
-     * Flash 时代的游戏普遍靠 OS 的按键重复来"连续移动",只发一次按下键
-     * 在很多游戏里等于只走一步 —— 这大概就是"按键有问题"的来源之一。
-     */
     private void startRepeat(final Btn b) {
         stopRepeat(b);
         b.repeat = new Runnable() {
             @Override
             public void run() {
                 if (!b.pressed) return;
-                dispatchKey(b.code, true, b.label, true);   // 连发不刷状态栏/日志
+                dispatchKey(b.code, true, b.label, true);
                 ui.postDelayed(this, 110);
             }
         };
-        ui.postDelayed(b.repeat, 400);      // 首次重复延迟,模仿系统设置
+        ui.postDelayed(b.repeat, 400);
     }
 
     private void stopRepeat(Btn b) {
@@ -604,7 +563,6 @@ public class GamepadView extends View {
         }
     }
 
-    /** 状态栏回显:一来你能立刻看出"按钮到底有没有被按到",二来便于反馈问题。 */
     private void echo(String label, boolean down) {
         try {
             ((MainActivity) getContext()).setStatus(
@@ -617,11 +575,6 @@ public class GamepadView extends View {
         return -1;
     }
 
-    /**
-     * 把按键交给 window.__moKey()（宿主 shim），由它合成一个携带引擎所读取的
-     * 旧版 keyCode 的真实 keydown/keyup。若 shim 尚未就绪，则退回到内联合成，
-     * 保证手柄仍然可用。
-     */
     private void dispatchKey(final int code, final boolean down, final String label, boolean quiet) {
         if (!quiet) echo(label, down);
         final String type = down ? "keydown" : "keyup";

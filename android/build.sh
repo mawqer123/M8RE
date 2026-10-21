@@ -1,12 +1,8 @@
 #!/bin/bash
-# M8RE Android 移植版 —— 手工调用 aapt2/javac/d8/apksigner 构建。
-# 完全不依赖 Gradle：离线可用，几秒出包。
 set -e
 
-# 脚本自身所在目录(可在任意位置 clone 后直接构建)
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Android SDK 定位顺序：环境变量 > local.properties > 常见默认路径
 if [ -n "$ANDROID_HOME" ]; then
   SDK=$ANDROID_HOME
 elif [ -n "$ANDROID_SDK_ROOT" ]; then
@@ -20,7 +16,6 @@ if [ ! -d "$SDK" ]; then
   echo "!! 找不到 Android SDK,请设置 ANDROID_HOME 或写 local.properties 的 sdk.dir"; exit 1
 fi
 
-# build-tools:取版本号最高的一个(必须含 aapt2,跳过 debian/ 之类的非版本目录)
 BT=""
 for d in $(ls -d "$SDK"/build-tools/*/ 2>/dev/null | sort -V); do
   v=$(basename "$d")
@@ -31,7 +26,6 @@ if [ -z "$BT" ]; then
   echo "!! $SDK/build-tools 下没有可用的 aapt2"; exit 1
 fi
 
-# 平台版本：优先 android-35，没有就取版本号最高的可用平台
 PLATFORM=$SDK/platforms/android-35/android.jar
 if [ ! -f "$PLATFORM" ]; then
   PLATFORM=""
@@ -45,7 +39,6 @@ if [ -z "$PLATFORM" ] || [ ! -f "$PLATFORM" ]; then
   echo "!! 找不到 android.jar,请安装 platform"; exit 1
 fi
 
-# 版本号:只在这里定义,其余位置一律引用,避免多处漂移
 APP_VERSION_NAME="1.0"
 APP_VERSION_CODE=1
 
@@ -53,11 +46,6 @@ APP=$ROOT/app/src/main
 BUILD=$ROOT/build
 OUT=$ROOT/out
 
-# ------------------------------------------------------------------
-# 引擎同步：本 fork 的上游扩展源码在仓库根的 content/（git 里只存一份）。
-# assets/m8re/ 只存放移植层自己写的文件；每次构建前把 content/*.js 复制过去，
-# 保证 Android 版永远和同一棵树的引擎一致，不会出现两份互相分歧的副本。
-# ------------------------------------------------------------------
 UPSTREAM_CONTENT="$ROOT/../content"
 ASSETS_M8RE="$APP/assets/m8re"
 if [ -d "$UPSTREAM_CONTENT" ]; then
@@ -114,17 +102,6 @@ cp "$BUILD/base.apk" "$BUILD/unsigned.apk"
   (cd "$BUILD/dex" && zip -q -j "$BUILD/unsigned.apk" classes.dex)
 
 echo "==> [6/6] zipalign 对齐并签名"
-# 签名:优先用你自备的密钥(自己填路径与密码),没有才回退到本地 debug 密钥。
-#
-# 自己签名(发布用):
-#   export M8_KEYSTORE=/path/to/your.jks
-#   export M8_KS_PASS='你的密钥库密码'
-#   export M8_KEY_ALIAS='你的密钥别名'
-#   export M8_KEY_PASS='你的密钥密码'
-#   ./build.sh
-#
-# 不设置这些变量时，回退到本地 debug.keystore（仅限个人本地测试；
-# 别人拿到源码也能用它签,所以发布版请务必用你自己的密钥重签)。
 KEYSTORE=${M8_KEYSTORE:-$ROOT/debug.keystore}
 KS_PASS=${M8_KS_PASS:-}
 KEY_ALIAS=${M8_KEY_ALIAS:-}
@@ -135,7 +112,6 @@ if [ -n "${M8_KEYSTORE:-}" ]; then
     echo "!! M8_KEYSTORE 已设置,但 M8_KS_PASS / M8_KEY_ALIAS 未提供"; exit 1
   fi
 else
-  # 本地测试密钥:只含 CN,不含任何组织/公司字段
   if [ ! -f "$KEYSTORE" ]; then
     keytool -genkeypair -keystore "$KEYSTORE" -alias m8re -keyalg RSA \
       -keysize 2048 -validity 10000 -storepass android -keypass android \
