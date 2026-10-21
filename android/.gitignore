@@ -1,0 +1,25 @@
+# 构建产物
+/build/
+/out/
+*.apk
+*.idsig
+
+# 签名密钥 —— 绝不要提交
+*.jks
+*.keystore
+keystore.properties
+.env
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# 本地 SDK 路径
+local.properties
+
+# 上游引擎在构建时从 ../content/ 自动同步,仓库里不存副本
+app/src/main/assets/m8re/0*.js
+app/src/main/assets/m8re/1*.js

@@ -56,3 +56,15 @@ M8 scripts can be shipped through bilibili's danmaku servers as invisible BAS ca
 ## License
 
 Released under the [MIT License](LICENSE).
+
+---
+
+## Android 移植版（本 fork 新增）
+
+本 fork 在 `android/` 下增加了把引擎打包成**纯 APK** 的文档与工具。原扩展的
+`content/`、`background/`、`manifest.json` 保持原样，未作修改。
+
+- 快速开始、构建方式、虚拟手柄键位、许可与免责声明见 [android/README.md](android/README.md)
+- 引擎源码在仓库根的 `content/`；`android/build.sh` 会在构建时自动同步，
+  因此不存在两份会漂移的副本
+- 报告问题请在此 fork 提 issue，不要打扰上游作者
